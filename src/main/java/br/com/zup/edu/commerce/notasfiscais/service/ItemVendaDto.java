@@ -1,5 +1,7 @@
 package br.com.zup.edu.commerce.notasfiscais.service;
 
+import br.com.zup.edu.commerce.notasfiscais.notas.ItemNota;
+
 import java.math.BigDecimal;
 
 public class ItemVendaDto {
@@ -17,6 +19,10 @@ public class ItemVendaDto {
         this.nome = nome;
         this.quantidade = quantidade;
         this.valor = valor;
+    }
+
+    public ItemNota toItemNota() {
+        return new ItemNota(nome,quantidade,valor);
     }
 
     public Long getId() {

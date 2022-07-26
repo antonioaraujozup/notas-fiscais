@@ -1,5 +1,6 @@
 package br.com.zup.edu.commerce.notasfiscais.service;
 
+import br.com.zup.edu.commerce.notasfiscais.notas.Usuario;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
@@ -23,6 +24,10 @@ public class UsuarioDto {
         this.endereco = endereco;
         this.email = email;
         this.dataNascimento = dataNascimento;
+    }
+
+    public Usuario toUsuario() {
+        return new Usuario(nome,cpf,endereco,email);
     }
 
     public String getNome() {
