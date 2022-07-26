@@ -43,4 +43,8 @@ public class NotaFiscal {
         item.setNotaFiscal(this);
     }
 
+    public Long getId() {
+        return id;
+    }
+
 }
