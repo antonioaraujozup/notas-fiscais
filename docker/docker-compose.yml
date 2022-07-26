@@ -1,0 +1,17 @@
+version: '3.0'
+services:
+  db:
+    image: postgres
+    restart: always
+    hostname: dbnotasfiscais
+    ports:
+      - "5432:5432"
+    networks:
+      - notas
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=notasfiscais
+networks:
+  notas:
+    driver: bridge
