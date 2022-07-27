@@ -35,7 +35,7 @@ public class VendaDto {
     public NotaFiscal toNotaFiscal() {
         Usuario compradorNota = comprador.toUsuario();
 
-        NotaFiscal notaFiscal = new NotaFiscal(compradorNota);
+        NotaFiscal notaFiscal = new NotaFiscal(codigoPedido,compradorNota);
 
         this.itens.forEach(item -> {
             ItemNota itemNota = item.toItemNota();
