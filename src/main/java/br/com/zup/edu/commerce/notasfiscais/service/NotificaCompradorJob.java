@@ -6,15 +6,16 @@ import br.com.zup.edu.commerce.notasfiscais.notas.StatusNotaFiscal;
 import br.com.zup.edu.commerce.notasfiscais.util.XMLUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.File;
 import java.util.List;
 
-@Configuration
+@Service
 @EnableScheduling
 public class NotificaCompradorJob {
 
@@ -39,38 +40,56 @@ public class NotificaCompradorJob {
     @Value("${mail.anexo.nome}")
     private String nomeArquivo;
 
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     @Scheduled(
             fixedDelayString = "${job.notificador-comprador.fixed-delay}",
             initialDelayString = "${job.notificador-comprador.initial-delay}"
     )
-    @Transactional
     public void notificaComprador() {
 
-        List<NotaFiscal> notas = this.notaFiscalRepository.findTop2ByStatusOrderByCriadaEm(StatusNotaFiscal.GERADA);
+        Boolean pendente = true;
 
-        notas.forEach(nota -> {
+        while(pendente) {
 
-            try {
+            pendente = transactionTemplate.execute((status) -> {
 
-                File notaFiscalXML = xmlUtil.converteObjetoParaArquivoXML(new NotaFiscalDto(nota), nomeArquivo);
+                List<NotaFiscal> notasGeradas = this.notaFiscalRepository.findTop5ByStatusOrderByCriadaEm(StatusNotaFiscal.GERADA);
 
-                enviadorEmailService.envia(
-                        remetente,
-                        nota.retornaEmailComprador(),
-                        assunto,
-                        corpo.formatted(nota.getCodigoPedido()),
-                        notaFiscalXML,
-                        nomeArquivo
-                );
+                if (notasGeradas.isEmpty()) {
+                    return false;
+                }
 
-                nota.alteraStatusEnviadaComprador();
+                notasGeradas.forEach(nota -> {
 
-                this.notaFiscalRepository.save(nota);
+                    try {
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+                        File notaFiscalXML = xmlUtil.converteObjetoParaArquivoXML(new NotaFiscalDto(nota), nomeArquivo);
+
+                        enviadorEmailService.envia(
+                                remetente,
+                                nota.retornaEmailComprador(),
+                                assunto,
+                                corpo.formatted(nota.getCodigoPedido()),
+                                notaFiscalXML,
+                                nomeArquivo
+                        );
+
+                        nota.alteraStatusEnviadaComprador();
+
+                        this.notaFiscalRepository.save(nota);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                return true;
+
+            }); // Aqui é realizado o commit da transação.
+
+        }
 
     }
 
